@@ -7,6 +7,7 @@ This project is a collection of small PowerShell scripts designed to perform var
 1. `ClearClipboard.ps1`: Clears the text content from the Windows clipboard.
 2. `ClearRecentDocuments.ps1`: Clears the list of recent documents in Microsoft Word and Excel.
 3. `system-clean.ps1`: Runs the built-in Windows Disk Cleanup tool in automated mode.
+4. `local-temp-del.ps1`: Deletes temporary files and directories and clears recent file history.
 
 ## Requirements
 
@@ -34,7 +35,13 @@ This script clears the list of recent documents from Microsoft Word and Excel. E
 
     .\system-clean.ps1
 
-This script initiates the Windows Disk Cleanup tool in automated mode, using the setup preferences.
+This script initiates the Windows Disk Cleanup tool in automated mode, using the setup preferences. Before running this script for the first time, remember to configure your cleanup options. Execute `cleanmgr /sageset:1` in a PowerShell window with administrative rights. This command opens the Disk Cleanup settings where you can select the types of files you want to delete (you may choose all available options for a comprehensive cleanup). Once configured, the script uses these settings to clean your system with the command `cleanmgr /sagerun:1`. Ensure this setup step has been completed to utilize the script effectively.
+
+### Local Temporary Files Deletion
+
+    .\local-temp-del.ps1
+
+This script removes temporary files from various system directories and clears the recent file history. It also calls the previously mentioned scripts for system cleaning, clipboard clearing, and recent document clearance to ensure comprehensive cleanup.
 
 ## Safety and Security
 
