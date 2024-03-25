@@ -16,7 +16,7 @@ function Show-FormDialog {
 
 	$form = New-Object Windows.Forms.Form
 	$form.Text = 'Network Drive Credentials'
-	$form.Size = New-Object System.Drawing.Size(285,225)
+	$form.Size = New-Object System.Drawing.Size(285,235)
 	$form.StartPosition = 'CenterScreen'
 	$form.MaximizeBox = $false
 	$form.MinimizeBox = $false
@@ -28,7 +28,7 @@ function Show-FormDialog {
 	$label.Text = 'Resize Ratio:'
 	$form.Controls.Add($label)
 
-	$ratioSelect = New-Object Windows.Forms.ComboBox 
+	$ratioSelect = New-Object Windows.Forms.ComboBox
 	$ratioSelect.Items.AddRange((100..10).Where({$_ % $selectSteps -eq 0}))
 	$ratioSelect.Top  = 25
 	$ratioSelect.Left = 5
@@ -43,7 +43,7 @@ function Show-FormDialog {
 	$label.Text = 'Quality:'
 	$form.Controls.Add($label)
 
-	$qualitySelect = New-Object Windows.Forms.ComboBox 
+	$qualitySelect = New-Object Windows.Forms.ComboBox
 	$qualitySelect.Items.AddRange((100..10).Where({$_ % $selectSteps -eq 0}))
 	$qualitySelect.Top  = 70
 	$qualitySelect.Left = 5
@@ -51,25 +51,25 @@ function Show-FormDialog {
 	$qualitySelect.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList;
 	$qualitySelect.Size = New-Object System.Drawing.Size(260,20)
 	$form.Controls.Add($qualitySelect)
-	
-	$deleteOrigCheckbox = New-Object Windows.Forms.Checkbox 
+
+	$deleteOrigCheckbox = New-Object Windows.Forms.Checkbox
 	$deleteOrigCheckbox.Text = 'Delete original PNG/JPG files?'
 	$deleteOrigCheckbox.Top  = 100
 	$deleteOrigCheckbox.Left = 5
 	$deleteOrigCheckbox.Size = New-Object System.Drawing.Size(260,20)
 	$deleteOrigCheckbox.Checked = $defaultDeleteOrig
 	$form.Controls.Add($deleteOrigCheckbox)
-	
-	$insteadJpgCheckbox = New-Object Windows.Forms.Checkbox 
-	$insteadJpgCheckbox.Text = 'Do it with JPGs as instead?'
+
+	$insteadJpgCheckbox = New-Object Windows.Forms.Checkbox
+	$insteadJpgCheckbox.Text = 'JPG to optimized JPG mode (no PNG conversion)'
 	$insteadJpgCheckbox.Top  = 130
 	$insteadJpgCheckbox.Left = 5
-	$insteadJpgCheckbox.Size = New-Object System.Drawing.Size(260,20)
+	$insteadJpgCheckbox.Size = New-Object System.Drawing.Size(260,30)
 	$insteadJpgCheckbox.Checked = $defaultInsteadJpg
 	$form.Controls.Add($insteadJpgCheckbox)
 
 	$okButton = New-Object System.Windows.Forms.Button
-	$okButton.Location = New-Object System.Drawing.Point(5,155)
+	$okButton.Location = New-Object System.Drawing.Point(5,165)
 	$okButton.Size = New-Object System.Drawing.Size(75,25)
 	$okButton.Text = 'OK'
 	$okButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
@@ -77,7 +77,7 @@ function Show-FormDialog {
 	$form.Controls.Add($okButton)
 
 	$cancelButton = New-Object System.Windows.Forms.Button
-	$cancelButton.Location = New-Object System.Drawing.Point(90,155)
+	$cancelButton.Location = New-Object System.Drawing.Point(90,165)
 	$cancelButton.Size = New-Object System.Drawing.Size(75,25)
 	$cancelButton.Text = 'Cancel'
 	$cancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
@@ -90,13 +90,13 @@ function Show-FormDialog {
 	})
 
 	$dialogResult = $form.ShowDialog()
-	
+
 	if ( $dialogResult -eq [System.Windows.Forms.DialogResult]::OK ) {
 		$result = Set-DialogResultObject $($ratioSelect.SelectedItem) $($qualitySelect.SelectedItem) $($deleteOrigCheckbox.Checked) $($insteadJpgCheckbox.Checked)
 	} else {
 		$result = $false
 	}
-		
+
 	return $result
 }
 
@@ -113,13 +113,13 @@ function Set-DialogResultObject {
 		[Parameter(Mandatory=$true, Position=2)] [AllowEmptyString()] [bool]$deleteOrig,
 		[Parameter(Mandatory=$true, Position=3)] [AllowEmptyString()] [bool]$insteadJpg
 	)
-	
+
 	$result = "" | Select-Object -Property ratio,quality,deleteOrig,insteadJpg
 	$result.ratio      = $ratio
 	$result.quality    = $quality
 	$result.deleteOrig = $deleteOrig
 	$result.insteadJpg = $insteadJpg
-	
+
 	return $result
 }
 
@@ -137,7 +137,7 @@ function SetConsole-Visibility {
 		[Switch]$Show,
 		[Switch]$Hide
 	)
-	
+
     if (-not ("Console.Window" -as [type])) {
         Add-Type -Name Window -Namespace Console -MemberDefinition '
 			[DllImport("Kernel32.dll")]
@@ -165,14 +165,14 @@ function SetConsole-Visibility {
         # ShowDefault = 10,
         # ForceMinimized = 11
 		$showState = 1
-		
+
         $null = [Console.Window]::ShowWindow($consolePtr, $showState)
     }
 
     if ($Hide) {
 		#0 hide
 		$showState = 0
-		
+
         $consolePtr = [Console.Window]::GetConsoleWindow()
         $null = [Console.Window]::ShowWindow($consolePtr, $showState)
     }
@@ -192,7 +192,7 @@ function DeleteFile {
 		[Parameter(Mandatory=$true)] [String]$File,
 		[Switch]$SafeDelete
 	)
-	
+
 	if ( $SafeDelete ) {
 		Add-Type -AssemblyName Microsoft.VisualBasic
 		[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($File, 'OnlyErrorDialogs', 'SendToRecycleBin')
@@ -200,6 +200,32 @@ function DeleteFile {
 		Remove-Item $file
 	}
 }
+
+#
+# AdjustImageOrientation
+#
+# Modifies image to keep the orientation like the original image but not using EXIF Data anymore
+#
+#
+function Adjust-ImageOrientation {
+    Param (
+        [Drawing.Image]$Image
+    )
+
+    # Versuche, die Ausrichtungsinformationen zu erhalten; fahre fort, wenn erfolgreich
+    try {
+        $orientation = $Image.GetPropertyItem(274).Value[0]
+        switch ($orientation) {
+            3 { $Image.RotateFlip([System.Drawing.RotateFlipType]::Rotate180FlipNone) }
+            6 { $Image.RotateFlip([System.Drawing.RotateFlipType]::Rotate90FlipNone) }
+            8 { $Image.RotateFlip([System.Drawing.RotateFlipType]::Rotate270FlipNone) }
+            default { }
+        }
+    } catch {
+        # EXIF-Daten nicht gefunden oder anderer Fehler, mache nichts
+    }
+}
+
 
 #
 # ConvertImage
@@ -214,21 +240,21 @@ function Convert-Image {
         [Parameter(Mandatory=$true)] [String]$SourcePath,
         [Parameter(Mandatory=$true)] [Object]$Settings
     )
-	
+
 	Add-Type -AssemblyName system.drawing
-	
+
 	#Encoder parameter for image quality
 	$imageEncoder = [System.Drawing.Imaging.Encoder]::Quality
 	$imageEncoderParams = New-Object System.Drawing.Imaging.EncoderParameters(1)
-	$imageEncoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter($imageEncoder, $conversionSettings.quality)
+	$imageEncoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter($imageEncoder, $Settings.quality)
 
 	# get codec
 	$imageCodecInfo = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where {$_.MimeType -eq 'image/jpeg'}
 
     # Determine the file filter based on the settings
-	$fileFilter = "*.png"
+	$fileFilters = @("*.png")
     if ($Settings.insteadJpg) {
-        $fileFilter = "*.jpg"
+        $fileFilters = @("*.jpg", "*.jpeg")
     }
 
 	# Create new subfolder
@@ -238,44 +264,57 @@ function Convert-Image {
         New-Item -ItemType Directory -Path $newFolderPath
     }
 
-    Get-ChildItem $SourcePath -Filter $fileFilter -File | ForEach-Object {		
-		$source  = $_.FullName
-		$test    = [System.IO.Path]::GetDirectoryName($source)
-		$base    = $_.BaseName + ".jpg"
-		$basedir = Join-Path $test $base
-		
-		# Set target file path
-		$targetFilePath = Join-Path $newFolderPath $base
-		
-		# Console output
-		Write-Host "Konvertierung: $source -> $targetFilePath"
-		
-		# Load original image
-		$image = [drawing.image]::FromFile($source)
-		
-		# Create a new image
-		$newWidth  = [int] $([math]::Round( ($image.Width / 100) * $Settings.ratio ))
-		$newHeight = [int] $([math]::Round( ($image.Height / 100) * $Settings.ratio ))		
-		$newImage = [System.Drawing.Bitmap]::new($newWidth,$newHeight)
+    foreach ($fileFilter in $fileFilters) {
+		Get-ChildItem $SourcePath -Filter $fileFilter -File | ForEach-Object {
+			$source  = $_.FullName
+			$test    = [System.IO.Path]::GetDirectoryName($source)
+			$base    = $_.BaseName + ".jpg"
+			$basedir = Join-Path $test $base
 
-		# Add graphic based on the new image (makes on transparent PNGs the background white instead of black, and set the interpolation mode)
-		$graphic = [System.Drawing.Graphics]::FromImage($newImage)
-		$graphic.Clear([System.Drawing.Color]::White) # Set the color to white
-		$graphic.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-		
-		# Add the contents of $image
-		$graphic.DrawImage($image, 0, 0, $newWidth, $newHeight)
+			# Set target file path
+			$targetFilePath = Join-Path $newFolderPath $base
 
-		# Now save the $NewImage instead of $image
-		$newImage.Save($targetFilePath, $imageCodecInfo, $imageEncoderParams)
+			# Console output
+			Write-Host "Converting: $source -> $targetFilePath"
 
-		# Delete original PNG file
-		if ( $Settings.deleteOrig -eq $true ) {
+			# Load original image
+			$image = [drawing.image]::FromFile($source)
+			#$image = [System.Drawing.Image]::FromFile($source)
+
+			# Check and adjust the orientation based on the original image's EXIF data (if the image type is JPG)
+			if ($source -match "\.jpe?g$") {
+				Adjust-ImageOrientation -Image $image
+			}
+
+			# Create a new image
+			$newWidth  = [int] $([math]::Round( ($image.Width / 100) * $Settings.ratio ))
+			$newHeight = [int] $([math]::Round( ($image.Height / 100) * $Settings.ratio ))
+			$newImage = [System.Drawing.Bitmap]::new($newWidth,$newHeight)
+
+			# Add graphic based on the new image (makes on transparent PNGs the background white instead of black, and set the interpolation mode)
+			$graphic = [System.Drawing.Graphics]::FromImage($newImage)
+			$graphic.Clear([System.Drawing.Color]::White) # Set the color to white
+			$graphic.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+
+			# Add the contents of $image
+			$graphic.DrawImage($image, 0, 0, $newWidth, $newHeight)
+
+			# Now save the $NewImage instead of $image
+			$newImage.Save($targetFilePath, $imageCodecInfo, $imageEncoderParams)
+
+			# Dispose resources
+			$graphic.Dispose()
+			$newImage.Dispose()
 			$image.Dispose()
-			DeleteFile -SafeDelete -File $source
+
+			# Delete original PNG file
+			if ( $Settings.deleteOrig -eq $true ) {
+				$image.Dispose()
+				DeleteFile -SafeDelete -File $source
+			}
 		}
-    }
-	
+	}
+
 	# Debug (wait for prompt to see errors)
-	#Read-Host -Prompt "Drücken Sie Enter, um fortzufahren..."
+	Read-Host -Prompt "Drücken Sie Enter, um fortzufahren..."
 }
