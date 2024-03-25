@@ -9,6 +9,7 @@ The repository is organized into different folders, each representing a separate
 - **7-Zip PowerShell Scripts**: Scripts for compressing files and folders using 7-Zip, including context menu integration.
 - **Convert PNG to JPG**: A tool to batch convert PNG images to JPG format, with options for image quality and size.
 - **Docx to PDF Conversion**: Automates the conversion of DOCX documents to PDF format directly from the context menu.
+- **Xlsx to PDF Conversion**: Automates the conversion of XLSX sheets to PDF format directly from the context menu.
 - **Network Drives Mapping**: Scripts for mapping network drives based on configurations defined in an INI file.
 - **Robocopy PC Backup**: Utilizes Robocopy to create robust backup routines for personal data.
 - **Windows PowerShell Context Menu Extension**: Adds custom PowerShell options to the Windows context menu for enhanced accessibility.
