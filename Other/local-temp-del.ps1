@@ -11,7 +11,10 @@ $paths = @(
     "$env:USERPROFILE\AppData\Local\Temp\*",
     'C:\Windows\Temp\*',
     'C:\Windows\SoftwareDistribution\Download\*',
-    'C:\Windows\SoftwareDistribution\SLS\*'
+    'C:\Windows\SoftwareDistribution\SLS\*',
+    "$env:USERPROFILE\AppData\Roaming\Nextcloud\*.msi",
+    "$env:USERPROFILE\AppData\Roaming\Nextcloud\*cfg_bak*",
+    "$env:USERPROFILE\AppData\Roaming\Nextcloud\logs\*.log*"
 )
 
 foreach ($path in $paths) {
