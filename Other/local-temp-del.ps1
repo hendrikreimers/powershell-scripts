@@ -55,3 +55,6 @@ Write-Host "Clearing Clipboard"
 # Delete Recent Files in Word and Excel
 Write-Host "Clearing Recent Documents in Word and Excel"
 & "$env:USERPROFILE\PowerShellScripts\ClearRecentDocuments.ps1"
+
+# Clean up developer caches
+& "$env:USERPROFILE\PowerShellScripts\dev-clean.ps1"
